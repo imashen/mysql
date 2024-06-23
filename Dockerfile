@@ -15,7 +15,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 8C718D3B5072E1F5 \
 
 
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server=5.7.* \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server \
     && rm -rf /var/lib/apt/lists/*
 
 

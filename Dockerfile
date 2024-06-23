@@ -1,6 +1,6 @@
 FROM debian:bookworm
 RUN echo 'Asia/Shanghai' >/etc/timezone
-MAINTAINER i@imashen.cn
+MAINTAINER "i@imashen.cn"
 
 RUN apt -y install epel-release 
 RUN apt install initscripts -y

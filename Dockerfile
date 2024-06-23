@@ -7,6 +7,7 @@ RUN apt-get update \
         libncurses5-dev \
         bison \
         perl \
+        libboost-all-dev \
     && rm -rf /var/lib/apt/lists/*
 
 

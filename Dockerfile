@@ -1,4 +1,4 @@
-FROM debian:bookworm
+FROM arm32v7/debian:bookworm
 
 # 设置时区为上海
 ENV TZ=Asia/Shanghai

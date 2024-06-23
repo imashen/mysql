@@ -7,7 +7,9 @@ RUN apt-get update \
         libncurses5-dev \
         bison \
         perl \
-        libboost-all-dev \
+        libssl-dev \
+        curl \
+        pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -19,9 +21,10 @@ RUN tar -zxvf mysql-5.7.40.tar.gz
 
 WORKDIR /usr/local/src/mysql-5.7.40
 
-RUN cmake . \
+RUN cmake . -DDOWNLOAD_BOOST=1 -DWITH_BOOST=/usr/local/boost \
     && make \
     && make install
+    
 RUN groupadd mysql \
     && useradd -r -g mysql -s /bin/false mysql \
     && mkdir -p /var/lib/mysql /etc/mysql/conf.d \

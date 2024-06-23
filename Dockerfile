@@ -22,7 +22,7 @@ RUN tar -zxvf mysql-5.7.40.tar.gz
 WORKDIR /usr/local/src/mysql-5.7.40
 
 RUN cmake . -DDOWNLOAD_BOOST=1 -DWITH_BOOST=/usr/local/boost \
-    && make \
+    && make -j  \
     && make install
     
 RUN groupadd mysql \

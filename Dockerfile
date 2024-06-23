@@ -12,7 +12,7 @@ RUN apt-get update \
 
 WORKDIR /usr/local/src
 
-RUN wget https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.40.tar.gz
+RUN wget --no-check-certificate https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.40.tar.gz
 
 RUN tar -zxvf mysql-5.7.40.tar.gz
 

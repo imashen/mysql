@@ -1,100 +1,51 @@
-#
-# NOTE: THIS DOCKERFILE IS GENERATED VIA "apply-templates.sh"
-#
-# PLEASE DO NOT EDIT IT DIRECTLY.
-#
-
+# 使用 Debian Bookworm slim base image for armv7
 FROM debian:bookworm-slim
 
-# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
+# 添加 mysql 用户和组
 RUN groupadd -r mysql && useradd -r -g mysql mysql
 
-RUN apt-get update && apt-get install -y --no-install-recommends gnupg && rm -rf /var/lib/apt/lists/*
+# 安装编译 MySQL 所需的依赖包
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        curl \
+        libncurses-dev \
+        bison \
+        perl \
+        wget \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# add gosu for easy step-down from root
-# https://github.com/tianon/gosu/releases
-ENV GOSU_VERSION 1.17
-RUN set -eux; \
-	savedAptMark="$(apt-mark showmanual)"; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends ca-certificates wget; \
-	rm -rf /var/lib/apt/lists/*; \
-	dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
-	wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
-	wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
-	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
-	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
-	gpgconf --kill all; \
-	rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc; \
-	apt-mark auto '.*' > /dev/null; \
-	[ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; \
-	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-	chmod +x /usr/local/bin/gosu; \
-	gosu --version; \
-	gosu nobody true
+# 下载并解压 MySQL 源代码
+ENV MYSQL_VERSION 8.0.24
+RUN mkdir /usr/src/mysql && \
+    curl -SL "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_VERSION/mysql-$MYSQL_VERSION.tar.gz" \
+    | tar -xzC /usr/src/mysql --strip-components=1
 
-RUN mkdir /docker-entrypoint-initdb.d
+# 编译安装 MySQL
+WORKDIR /usr/src/mysql
+RUN cmake . \
+    -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+    -DDEFAULT_CHARSET=utf8mb4 \
+    -DDEFAULT_COLLATION=utf8mb4_unicode_ci \
+    && make && make install
 
-RUN set -eux; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-		bzip2 \
-		openssl \
-# FATAL ERROR: please install the following Perl modules before executing /usr/local/mysql/scripts/mysql_install_db:
-# File::Basename
-# File::Copy
-# Sys::Hostname
-# Data::Dumper
-		perl \
-		xz-utils \
-		zstd \
-	; \
-	rm -rf /var/lib/apt/lists/*
+# 配置 MySQL
+RUN mkdir -p /etc/mysql /var/lib/mysql /var/run/mysqld && \
+    chown -R mysql:mysql /var/lib/mysql /var/run/mysqld && \
+    chmod 1777 /var/run/mysqld /var/lib/mysql
 
-RUN set -eux; \
-# pub   rsa4096 2023-10-23 [SC] [expires: 2025-10-22]
-#       BCA4 3417 C3B4 85DD 128E  C6D4 B7B3 B788 A8D3 785C
-# uid           [ unknown] MySQL Release Engineering <mysql-build@oss.oracle.com>
-# sub   rsa4096 2023-10-23 [E] [expires: 2025-10-22]
-	key='BCA4 3417 C3B4 85DD 128E C6D4 B7B3 B788 A8D3 785C'; \
-	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
-	mkdir -p /etc/apt/keyrings; \
-	gpg --batch --export "$key" > /etc/apt/keyrings/mysql.gpg; \
-	gpgconf --kill all; \
-	rm -rf "$GNUPGHOME"
+# 添加 MySQL 配置文件和启动脚本
+COPY config/my.cnf /etc/mysql/my.cnf
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # 兼容性
 
-ENV MYSQL_MAJOR 8.0
-ENV MYSQL_VERSION 8.0.37-1debian12
-
-RUN echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/debian/ bookworm mysql-8.0' > /etc/apt/sources.list.d/mysql.list
-
-# the "/var/lib/mysql" stuff here is because the mysql-server postinst doesn't have an explicit way to disable the mysql_install_db codepath besides having a database already "configured" (ie, stuff in /var/lib/mysql/mysql)
-# also, we set debconf keys to make APT a little quieter
-RUN { \
-		echo mysql-community-server mysql-community-server/data-dir select ''; \
-		echo mysql-community-server mysql-community-server/root-pass password ''; \
-		echo mysql-community-server mysql-community-server/re-root-pass password ''; \
-		echo mysql-community-server mysql-community-server/remove-test-db select false; \
-	} | debconf-set-selections \
-	&& apt-get update \
-	&& apt-get install -y \
-		mysql-community-client="${MYSQL_VERSION}" \
-		mysql-community-server-core="${MYSQL_VERSION}" \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /var/lib/mysql && mkdir -p /var/lib/mysql /var/run/mysqld \
-	&& chown -R mysql:mysql /var/lib/mysql /var/run/mysqld \
-# ensure that /var/run/mysqld (used for socket and lock files) is writable regardless of the UID our mysqld instance ends up having at runtime
-	&& chmod 1777 /var/run/mysqld /var/lib/mysql
-
+# 定义 MySQL 数据卷
 VOLUME /var/lib/mysql
 
-# Config files
-COPY config/ /etc/mysql/
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
-ENTRYPOINT ["docker-entrypoint.sh"]
+# 暴露 MySQL 端口
+EXPOSE 3306
 
-EXPOSE 3306 33060
+# 设置入口点和默认命令
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["mysqld"]

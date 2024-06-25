@@ -46,7 +46,7 @@ RUN cmake .. \
     -DWITH_BOOST=/usr/local/boost \
     -DDEFAULT_CHARSET=utf8mb4 \
     -DDEFAULT_COLLATION=utf8mb4_unicode_ci \
-    -DWITH_SSL=/usr/lib/ssl \
+    -DWITH_SSL=system \
     -DOPENSSL_ROOT_DIR=/usr/lib/ssl \
     -DOPENSSL_LIBRARIES=/usr/lib/ssl \
     && make VERBOSE=1 \

@@ -21,12 +21,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libevent-dev \
         libpam0g-dev \
         libnuma-dev \
+        pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # 下载并解压 MySQL 源代码
 ENV MYSQL_VERSION=8.0.24
 RUN mkdir /usr/src/mysql && \
-    curl -SL "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_VERSION/mysql-$MYSQL_VERSION.tar.gz" \
+    curl -SL "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-$MYSQL_VERSION.tar.gz" \
     | tar -xzC /usr/src/mysql --strip-components=1
 
 # 下载并解压 Boost 库
@@ -45,6 +46,9 @@ RUN cmake .. \
     -DWITH_BOOST=/usr/local/boost \
     -DDEFAULT_CHARSET=utf8mb4 \
     -DDEFAULT_COLLATION=utf8mb4_unicode_ci \
+    -DWITH_SSL=/usr/lib/ssl \
+    -DOPENSSL_ROOT_DIR=/usr/lib/ssl \
+    -DOPENSSL_LIBRARIES=/usr/lib/ssl \
     && make VERBOSE=1 \
     && make install
 

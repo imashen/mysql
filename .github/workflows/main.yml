@@ -17,6 +17,41 @@ jobs:
       with:
         platforms: arm/v7
 
+    - name: Cache Boost library
+      uses: actions/cache@v4
+      with:
+        path: /usr/local/boost
+        key: boost-1.73.0
+        restore-keys: |
+          boost-
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential \
+          cmake \
+          curl \
+          libncurses-dev \
+          bison \
+          perl \
+          wget \
+          ca-certificates \
+          libssl-dev \
+          libcurl4-openssl-dev \
+          zlib1g-dev \
+          libaio-dev \
+          libevent-dev \
+          libpam0g-dev \
+          libnuma-dev \
+          pkg-config
+
+    - name: Download and install Boost
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        curl -SL "https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.gz" \
+        | tar -xzC /usr/local/boost --strip-components=1
+
     - name: Set up Docker Buildx
       id: buildx
       uses: docker/setup-buildx-action@v3

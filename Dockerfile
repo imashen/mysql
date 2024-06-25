@@ -17,6 +17,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libssl-dev \
         libcurl4-openssl-dev \
         zlib1g-dev \
+        libaio-dev \
+        libevent-dev \
+        libboost-all-dev \
+        libpam0g-dev \
+        libnuma-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 下载并解压 MySQL 源代码
@@ -25,9 +30,12 @@ RUN mkdir /usr/src/mysql && \
     curl -SL "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_VERSION/mysql-$MYSQL_VERSION.tar.gz" \
     | tar -xzC /usr/src/mysql --strip-components=1
 
+# 创建构建目录
+RUN mkdir /usr/src/mysql/bld
+
 # 编译和安装 MySQL
-WORKDIR /usr/src/mysql
-RUN cmake . \
+WORKDIR /usr/src/mysql/bld
+RUN cmake .. \
     -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
     -DDEFAULT_CHARSET=utf8mb4 \
     -DDEFAULT_COLLATION=utf8mb4_unicode_ci \

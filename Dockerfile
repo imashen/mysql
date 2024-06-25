@@ -39,7 +39,9 @@ RUN mkdir /usr/local/boost && \
     | tar -xzC /usr/local/boost --strip-components=1
 
 # 创建构建目录
-RUN mkdir /usr/src/mysql/bld
+RUN mkdir /usr/src/mysql/bld && \
+    export OPENSSL_ROOT_DIR=/usr/local/openssl && \
+    export OPENSSL_LIBRARIES=/usr/local/openssl
 
 # 编译和安装 MySQL
 WORKDIR /usr/src/mysql/bld

@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         cmake \
         curl \
+        openssl-devel \
+        ncurses-devel \
         libncurses-dev \
         bison \
         perl \

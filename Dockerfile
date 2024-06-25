@@ -22,13 +22,14 @@ RUN mkdir /usr/src/mysql && \
     curl -SL "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_VERSION/mysql-$MYSQL_VERSION.tar.gz" \
     | tar -xzC /usr/src/mysql --strip-components=1
 
-# 编译安装 MySQL
+# 编译和安装 MySQL
 WORKDIR /usr/src/mysql
 RUN cmake . \
     -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
     -DDEFAULT_CHARSET=utf8mb4 \
     -DDEFAULT_COLLATION=utf8mb4_unicode_ci \
-    && make && make install
+    && make VERBOSE=1 \
+    && make install
 
 # 配置 MySQL
 RUN mkdir -p /etc/mysql /var/lib/mysql /var/run/mysqld && \

@@ -14,10 +14,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         perl \
         wget \
         ca-certificates \
+        libssl-dev \
+        libcurl4-openssl-dev \
+        zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 下载并解压 MySQL 源代码
-ENV MYSQL_VERSION 8.0.24
+ENV MYSQL_VERSION=8.0.24
 RUN mkdir /usr/src/mysql && \
     curl -SL "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_VERSION/mysql-$MYSQL_VERSION.tar.gz" \
     | tar -xzC /usr/src/mysql --strip-components=1

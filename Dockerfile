@@ -1,4 +1,4 @@
-FROM debian:{{ .debian.suite }}-slim
+FROM debian:bookworm-slim
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN groupadd -r mysql && useradd -r -g mysql mysql
@@ -62,7 +62,7 @@ RUN set -eux; \
 ENV MYSQL_MAJOR {{ env.version }}
 ENV MYSQL_VERSION {{ .debian.version }}
 
-RUN echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/debian/ {{ .debian.suite }} mysql-{{ env.version }}' > /etc/apt/sources.list.d/mysql.list
+RUN echo 'deb [ signed-by=/etc/apt/keyrings/mysql.gpg ] http://repo.mysql.com/apt/debian/ bookworm mysql-{{ env.version }}' > /etc/apt/sources.list.d/mysql.list
 
 # the "/var/lib/mysql" stuff here is because the mysql-server postinst doesn't have an explicit way to disable the mysql_install_db codepath besides having a database already "configured" (ie, stuff in /var/lib/mysql/mysql)
 # also, we set debconf keys to make APT a little quieter

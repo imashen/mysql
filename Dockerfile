@@ -29,8 +29,11 @@ RUN mkdir /usr/src/mysql && \
     curl -SL "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_VERSION/mysql-$MYSQL_VERSION.tar.gz" \
     | tar -xzC /usr/src/mysql --strip-components=1
 
-# 使用 GitHub 提供的 Boost 库
-RUN apt-get update && apt-get install -y --no-install-recommends libboost-all-dev
+# 下载并解压 Boost 库
+ENV BOOST_VERSION=1_73_0
+RUN mkdir /usr/local/boost && \
+    curl -SL "https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_${BOOST_VERSION}.tar.gz" \
+    | tar -xzC /usr/local/boost --strip-components=1
 
 # 创建构建目录
 RUN mkdir /usr/src/mysql/bld
@@ -39,6 +42,7 @@ RUN mkdir /usr/src/mysql/bld
 WORKDIR /usr/src/mysql/bld
 RUN cmake .. \
     -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+    -DWITH_BOOST=/usr/local/boost \
     -DDEFAULT_CHARSET=utf8mb4 \
     -DDEFAULT_COLLATION=utf8mb4_unicode_ci \
     && make VERBOSE=1 \

@@ -4,11 +4,37 @@ FROM debian:bookworm-slim
 # 添加 mysql 用户和组
 RUN groupadd -r mysql && useradd -r -g mysql mysql
 
+# 安装编译 MySQL 所需的依赖包
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        curl \
+        libncurses-dev \
+        bison \
+        perl \
+        wget \
+        ca-certificates \
+        libssl-dev \
+        libcurl4-openssl-dev \
+        zlib1g-dev \
+        libaio-dev \
+        libevent-dev \
+        libpam0g-dev \
+        libnuma-dev \
+        pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
 # 下载并解压 MySQL 源代码
 ENV MYSQL_VERSION=8.0.24
 RUN mkdir /usr/src/mysql && \
     curl -SL "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-$MYSQL_VERSION.tar.gz" \
     | tar -xzC /usr/src/mysql --strip-components=1
+
+# 下载并解压 Boost 库
+ENV BOOST_VERSION=1_73_0
+RUN mkdir /usr/local/boost && \
+    curl -SL "https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_${BOOST_VERSION}.tar.gz" \
+    | tar -xzC /usr/local/boost --strip-components=1
 
 # 创建构建目录
 RUN mkdir /usr/src/mysql/bld
@@ -20,7 +46,9 @@ RUN cmake .. \
     -DWITH_BOOST=/usr/local/boost \
     -DDEFAULT_CHARSET=utf8mb4 \
     -DDEFAULT_COLLATION=utf8mb4_unicode_ci \
-    -DWITH_SSL=system \
+    -DWITH_SSL=/usr/lib/ssl \
+    -DOPENSSL_ROOT_DIR=/usr/lib/ssl \
+    -DOPENSSL_LIBRARIES=/usr/lib/ssl \
     && make VERBOSE=1 \
     && make install
 

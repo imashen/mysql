@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         zlib1g-dev \
         libaio-dev \
         libevent-dev \
-        libboost-all-dev \
         libpam0g-dev \
         libnuma-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -29,6 +28,9 @@ ENV MYSQL_VERSION=8.0.24
 RUN mkdir /usr/src/mysql && \
     curl -SL "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_VERSION/mysql-$MYSQL_VERSION.tar.gz" \
     | tar -xzC /usr/src/mysql --strip-components=1
+
+# 使用 GitHub 提供的 Boost 库
+RUN apt-get update && apt-get install -y --no-install-recommends libboost-all-dev
 
 # 创建构建目录
 RUN mkdir /usr/src/mysql/bld
